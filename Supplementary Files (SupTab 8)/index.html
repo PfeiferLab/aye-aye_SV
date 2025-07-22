@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset='utf-8'>
+    <title>samplot</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter2/1.4.7/crossfilter.min.js"
+        type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/3.0.12/dc.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"
+        type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.5.0/viewer.min.js" type="text/javascript"></script>
+    <script src="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.1/b-html5-1.6.1/sc-2.0.1/sl-1.3.1/datatables.min.js"
+        type="text/javascript"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.5.0/viewer.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/dc/3.0.12/dc.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.1/b-html5-1.6.1/sc-2.0.1/sl-1.3.1/datatables.min.css"
+        rel="stylesheet" type="text/css" />
+
+    <style type="text/css">
+        #filter-menu .dropdown-menu {
+            min-height: 100px;
+            max-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #edf0f2;
+        }
+
+        span.no-show {
+            display: none;
+        }
+
+        span.show-ellipsis:after {
+            content: "...";
+        }
+
+        .datatable-info {
+            font-size: .9em;
+        }
+
+        #variant-table_info {
+            padding-top: 8px;
+        }
+
+        table.dataTable thead th.sorting:after,
+        table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_desc:after,
+        table.dataTable thead th.sorting:before,
+        table.dataTable thead th.sorting_asc:before,
+        table.dataTable thead th.sorting_desc:before {
+            font-family: FontAwesome !important;
+        }
+
+        .modal-content {
+            width: 610px;
+        }
+
+        h7 {
+            font-size: .95rem;
+        }
+
+        body {
+            height: 100vh
+        }
+
+        div.dts div.dataTables_scrollBody {
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark p-0 pl-2">
+        <a class="navbar-brand text-light p-0" href="https://github.com/ryanlayer/samplot">samplot</a>
+    </nav>
+
+    <div class="modal fade" id="filter-modal" tabindex="-1" role="dialog" aria-labelledby="filter-modal"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="flex-column">
+                        <h5 class="modal-title" id="filter-modal">Filters</h5>
+                        <h7 class="pl-2 text-secondary" id="variant-count">
+                            <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+                        </h7>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row pt-2">
+                            <div class="col">
+                                <h5>Sample</h5>
+                            </div>
+                        </div>
+                        <div class="row pb-3">
+                            <div class="col-12">
+                                <div id="sample-search"></div>
+                            </div>
+                        </div>
+                        <div class="row" id="nsamples-chart">
+                            <div class="col-4">
+                                <h5># of Samples</h5>
+                            </div>
+                            <div class="col-8 text-right">
+                                <span class="reset text-muted" style="display: none;">[<span
+                                        class="filter"></span>]</span>
+                                <a class="reset" href="javascript:nsamplesChart.filterAll();dc.redrawAll();"
+                                    style="display: none;">Reset</a>
+                            </div>
+                        </div>
+                        <div class="row" id="size-chart">
+                            <div class="col-4">
+                                <h5>Size</h5>
+                            </div>
+                            <div class="col-8 text-right">
+                                <span class="reset text-muted" style="display: none;">[<span
+                                        class="filter"></span>]</span>
+                                <a class="reset" href="javascript:sizeChart.filterAll();dc.redrawAll();"
+                                    style="display: none;">Reset</a>
+                            </div>
+                        </div>
+                        <div class="row" id="type-chart">
+                            <div class="col-4">
+                                <h5>SV Type</h5>
+                            </div>
+                            <div class="col-8 text-right">
+                                <span class="reset text-muted" style="display: none;">[<span
+                                        class="filter"></span>]</span>
+                                <a class="reset" href="javascript:typeChart.filterAll();dc.redrawAll();"
+                                    style="display: none;">Reset</a>
+                            </div>
+                        </div>
+                        <div class="row" id="chrom-chart">
+                            <div class="col-4">
+                                <h5>Chromosome</h5>
+                            </div>
+                            <div class="col-8 text-right">
+                                <span class="reset text-muted" style="display: none;">[<span
+                                        class="filter"></span>]</span>
+                                <a class="reset" href="javascript:chromChart.filterAll();dc.redrawAll();"
+                                    style="display: none;">Reset</a>
+                            </div>
+                        </div>
+                        <div class="row" id="overlaps-chart" hidden>
+                            <div class="col-4">
+                                <h5>SV Overlaps</h5>
+                            </div>
+                            <div class="col-8 text-right">
+                                <span class="reset text-muted" style="display: none;">[<span
+                                        class="filter"></span>]</span>
+                                <a class="reset" href="javascript:overlapsChart.filterAll();dc.redrawAll();"
+                                    style="display: none;">Reset</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"
+                        onclick="javascript:dc.filterAll(); dc.renderAll();"
+                        title="Clear selection and close">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"
+                        title="Apply filters">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid h-90">
+        <div class="row" id="variant-table-placeholder">
+            <div class="col-12">
+                <div style="height:415px">
+                    <div class="d-flex justify-content-center align-items-center text-muted h-100">
+                        <div class="d-flex flex-column">
+                            <i class="fas fa-10x fa-table"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row pb-1" id="variant-table-div" hidden>
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table id="variant-table" class="table table-hover display nowrap" width="100%"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    const data = [{"chrom": "scaffold_1", "chrom2": null, "end": 15213692, "nsamples": 1, "samples": "2", "start": 15213592, "svlength": 100, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 15732920, "nsamples": 5, "samples": "10;11;14;4;9", "start": 15732829, "svlength": 91, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 41352364, "nsamples": 4, "samples": "1;14;2;8", "start": 41351062, "svlength": 1302, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 47961082, "nsamples": 3, "samples": "14;2;8", "start": 47960959, "svlength": 123, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 55502331, "nsamples": 10, "samples": "1;10;11;14;2;4;5;6;8;9", "start": 55497014, "svlength": 5317, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 90649309, "nsamples": 8, "samples": "1;12;13;14;2;5;6;8", "start": 90645538, "svlength": 3771, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 100001668, "nsamples": 12, "samples": "1;10;11;12;13;14;2;4;5;6;8;9", "start": 100000541, "svlength": 1127, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 141019270, "nsamples": 5, "samples": "1;11;12;3;7", "start": 141019187, "svlength": 83, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 149605799, "nsamples": 11, "samples": "10;11;13;14;2;3;4;5;6;8;9", "start": 149604034, "svlength": 1765, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 184483268, "nsamples": 9, "samples": "10;11;12;13;14;3;4;7;9", "start": 184483058, "svlength": 210, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 192973835, "nsamples": 12, "samples": "1;10;11;12;13;2;3;4;5;6;7;8", "start": 192973719, "svlength": 116, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 268986817, "nsamples": 12, "samples": "1;11;12;13;14;3;4;5;6;7;8;9", "start": 268986584, "svlength": 233, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 276726214, "nsamples": 5, "samples": "12;13;14;2;8", "start": 276718979, "svlength": 7235, "svtype": "DEL"}, {"chrom": "scaffold_1", "chrom2": null, "end": 316062009, "nsamples": 9, "samples": "1;10;2;3;4;5;6;7;9", "start": 315972758, "svlength": 89251, "svtype": "INV"}, {"chrom": "scaffold_2", "chrom2": null, "end": 705163, "nsamples": 9, "samples": "1;10;12;13;14;3;5;8;9", "start": 705022, "svlength": 141, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 1834808, "nsamples": 6, "samples": "10;11;2;4;5;8", "start": 1831002, "svlength": 3806, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 20626754, "nsamples": 7, "samples": "1;10;11;14;3;7;9", "start": 20624633, "svlength": 2121, "svtype": "INV"}, {"chrom": "scaffold_2", "chrom2": null, "end": 35135981, "nsamples": 1, "samples": "2", "start": 35129053, "svlength": 6928, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 66198922, "nsamples": 6, "samples": "10;11;13;3;7;9", "start": 66196559, "svlength": 2363, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 78314716, "nsamples": 12, "samples": "1;10;11;12;13;14;4;5;6;7;8;9", "start": 78312707, "svlength": 2009, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 92680883, "nsamples": 3, "samples": "11;3;9", "start": 92680822, "svlength": 61, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 118026080, "nsamples": 3, "samples": "14;4;9", "start": 118025976, "svlength": 104, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 124100682, "nsamples": 5, "samples": "1;12;14;5;8", "start": 124098302, "svlength": 2380, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 167128447, "nsamples": 4, "samples": "2;4;6;9", "start": 167127430, "svlength": 1017, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 184222330, "nsamples": 2, "samples": "1;5", "start": 184168685, "svlength": 53645, "svtype": "INV"}, {"chrom": "scaffold_2", "chrom2": null, "end": 205370972, "nsamples": 4, "samples": "10;12;4;7", "start": 205370913, "svlength": 59, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 208524607, "nsamples": 7, "samples": "1;13;14;3;6;8;9", "start": 208524530, "svlength": 77, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 229628598, "nsamples": 8, "samples": "10;11;13;2;3;4;7;9", "start": 229628185, "svlength": 413, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 244473849, "nsamples": 5, "samples": "1;13;14;6;8", "start": 244473492, "svlength": 357, "svtype": "DEL"}, {"chrom": "scaffold_2", "chrom2": null, "end": 282940391, "nsamples": 9, "samples": "12;14;2;4;5;6;7;8;9", "start": 282938731, "svlength": 1660, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 23322821, "nsamples": 2, "samples": "2;6", "start": 23316462, "svlength": 6359, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 23610402, "nsamples": 4, "samples": "1;10;11;4", "start": 23610344, "svlength": 58, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 25949553, "nsamples": 12, "samples": "1;10;11;12;13;14;3;5;6;7;8;9", "start": 25949398, "svlength": 155, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 60341157, "nsamples": 3, "samples": "1;12;8", "start": 60339830, "svlength": 1327, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 109566764, "nsamples": 3, "samples": "11;4;9", "start": 109566690, "svlength": 74, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 122177277, "nsamples": 10, "samples": "10;12;13;14;2;3;4;7;8;9", "start": 122170362, "svlength": 6915, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 130939709, "nsamples": 11, "samples": "1;10;11;12;14;3;5;6;7;8;9", "start": 130939601, "svlength": 108, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 135711232, "nsamples": 4, "samples": "13;14;2;8", "start": 135711056, "svlength": 176, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 136362373, "nsamples": 11, "samples": "10;11;13;14;2;4;5;6;7;8;9", "start": 136362269, "svlength": 104, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 172590143, "nsamples": 6, "samples": "10;12;14;3;7;9", "start": 172589718, "svlength": 425, "svtype": "DUP"}, {"chrom": "scaffold_3", "chrom2": null, "end": 176531843, "nsamples": 4, "samples": "11;14;3;9", "start": 176531752, "svlength": 91, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 192661129, "nsamples": 11, "samples": "1;10;11;13;2;4;5;6;7;8;9", "start": 192657269, "svlength": 3860, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 201696618, "nsamples": 9, "samples": "1;10;11;12;14;3;5;6;8", "start": 201696491, "svlength": 127, "svtype": "DEL"}, {"chrom": "scaffold_3", "chrom2": null, "end": 249555848, "nsamples": 7, "samples": "1;12;13;14;5;6;8", "start": 249555779, "svlength": 69, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 665479, "nsamples": 3, "samples": "1;10;3", "start": 665205, "svlength": 274, "svtype": "DUP"}, {"chrom": "scaffold_4", "chrom2": null, "end": 5538359, "nsamples": 7, "samples": "11;12;13;14;3;7;9", "start": 5538306, "svlength": 53, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 53205735, "nsamples": 12, "samples": "1;10;11;13;14;2;4;5;6;7;8;9", "start": 53198796, "svlength": 6939, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 66881153, "nsamples": 9, "samples": "10;11;14;2;3;4;6;7;9", "start": 66840371, "svlength": 40782, "svtype": "INV"}, {"chrom": "scaffold_4", "chrom2": null, "end": 98664849, "nsamples": 4, "samples": "11;14;4;9", "start": 98664615, "svlength": 234, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 190391772, "nsamples": 7, "samples": "1;11;3;5;6;8;9", "start": 190391713, "svlength": 59, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 191811849, "nsamples": 5, "samples": "10;12;13;3;7", "start": 191811794, "svlength": 55, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 195177881, "nsamples": 11, "samples": "10;11;12;13;14;2;4;5;6;7;8", "start": 195177431, "svlength": 450, "svtype": "DUP"}, {"chrom": "scaffold_4", "chrom2": null, "end": 202787339, "nsamples": 5, "samples": "10;11;12;3;7", "start": 202787221, "svlength": 118, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 207078340, "nsamples": 10, "samples": "1;10;12;13;14;2;3;5;8;9", "start": 207076475, "svlength": 1865, "svtype": "DEL"}, {"chrom": "scaffold_4", "chrom2": null, "end": 216953767, "nsamples": 3, "samples": "1;5;6", "start": 216953607, "svlength": 160, "svtype": "DUP"}, {"chrom": "scaffold_4", "chrom2": null, "end": 219078299, "nsamples": 12, "samples": "10;11;12;13;14;2;3;5;6;7;8;9", "start": 219078193, "svlength": 106, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 45887583, "nsamples": 11, "samples": "1;10;11;13;14;2;3;5;6;7;9", "start": 45887512, "svlength": 71, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 45957278, "nsamples": 10, "samples": "1;10;11;13;14;3;5;6;7;9", "start": 45956548, "svlength": 730, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 54467631, "nsamples": 12, "samples": "1;10;11;12;13;14;3;4;5;6;7;9", "start": 54458103, "svlength": 9528, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 72088108, "nsamples": 5, "samples": "10;12;4;7;9", "start": 72088049, "svlength": 59, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 86529274, "nsamples": 11, "samples": "1;10;11;12;14;3;5;6;7;8;9", "start": 86527227, "svlength": 2047, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 164253638, "nsamples": 6, "samples": "1;12;14;2;4;8", "start": 164253585, "svlength": 53, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 201823706, "nsamples": 4, "samples": "1;10;3;8", "start": 201821865, "svlength": 1841, "svtype": "DEL"}, {"chrom": "scaffold_5", "chrom2": null, "end": 213916553, "nsamples": 4, "samples": "1;13;5;8", "start": 213916497, "svlength": 56, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 13540743, "nsamples": 10, "samples": "10;11;12;13;14;2;4;5;7;9", "start": 13540375, "svlength": 368, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 25625845, "nsamples": 10, "samples": "1;11;12;13;14;2;3;5;6;8", "start": 25624848, "svlength": 997, "svtype": "INV"}, {"chrom": "scaffold_6", "chrom2": null, "end": 70359028, "nsamples": 8, "samples": "10;12;13;14;2;4;7;8", "start": 70358592, "svlength": 436, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 80679184, "nsamples": 12, "samples": "1;10;12;13;14;2;3;5;6;7;8;9", "start": 80679047, "svlength": 137, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 82536676, "nsamples": 4, "samples": "1;5;6;8", "start": 82535713, "svlength": 963, "svtype": "DUP"}, {"chrom": "scaffold_6", "chrom2": null, "end": 106353288, "nsamples": 12, "samples": "1;10;11;12;13;14;2;3;4;6;7;9", "start": 106346412, "svlength": 6876, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 115304542, "nsamples": 5, "samples": "10;13;3;7;9", "start": 115304296, "svlength": 246, "svtype": "INV"}, {"chrom": "scaffold_6", "chrom2": null, "end": 126237376, "nsamples": 12, "samples": "10;11;12;13;14;2;4;5;6;7;8;9", "start": 126237263, "svlength": 113, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 198704557, "nsamples": 9, "samples": "1;12;13;14;3;5;7;8;9", "start": 198704456, "svlength": 101, "svtype": "DEL"}, {"chrom": "scaffold_6", "chrom2": null, "end": 200270736, "nsamples": 10, "samples": "1;11;12;13;2;4;5;6;7;8", "start": 200267864, "svlength": 2872, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 5106309, "nsamples": 9, "samples": "1;10;11;13;14;4;7;8;9", "start": 5106222, "svlength": 87, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 5535536, "nsamples": 3, "samples": "12;3;7", "start": 5535468, "svlength": 68, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 20361668, "nsamples": 4, "samples": "2;4;5;6", "start": 20361194, "svlength": 474, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 28400656, "nsamples": 11, "samples": "1;12;13;14;2;3;4;5;6;8;9", "start": 28398717, "svlength": 1939, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 29276106, "nsamples": 10, "samples": "10;11;12;13;2;4;5;6;7;9", "start": 29274150, "svlength": 1956, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 40346966, "nsamples": 1, "samples": "4", "start": 40345353, "svlength": 1613, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 52133787, "nsamples": 5, "samples": "1;12;14;6;8", "start": 52133425, "svlength": 362, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 56530901, "nsamples": 6, "samples": "10;11;12;2;4;7", "start": 56530409, "svlength": 492, "svtype": "INV"}, {"chrom": "scaffold_7", "chrom2": null, "end": 115879600, "nsamples": 5, "samples": "11;12;13;4;7", "start": 115879523, "svlength": 77, "svtype": "DEL"}, {"chrom": "scaffold_7", "chrom2": null, "end": 115997337, "nsamples": 10, "samples": "1;10;11;12;13;3;4;5;6;7", "start": 115997252, "svlength": 85, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 18004461, "nsamples": 2, "samples": "1;6", "start": 18004262, "svlength": 199, "svtype": "DUP"}, {"chrom": "scaffold_8", "chrom2": null, "end": 18968381, "nsamples": 5, "samples": "13;2;5;6;8", "start": 18967190, "svlength": 1191, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 37102070, "nsamples": 12, "samples": "10;11;13;14;2;3;4;5;6;7;8;9", "start": 37100958, "svlength": 1112, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 39322533, "nsamples": 6, "samples": "10;11;12;3;7;9", "start": 39322481, "svlength": 52, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 55674092, "nsamples": 6, "samples": "1;3;5;6;7;9", "start": 55672555, "svlength": 1537, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 58013658, "nsamples": 7, "samples": "10;11;12;14;3;7;9", "start": 58013597, "svlength": 61, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 72787695, "nsamples": 11, "samples": "1;10;11;12;13;14;3;5;7;8;9", "start": 72787632, "svlength": 63, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 110555019, "nsamples": 1, "samples": "3", "start": 110553734, "svlength": 1285, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 112721187, "nsamples": 10, "samples": "1;11;12;13;14;2;4;5;6;8", "start": 112721064, "svlength": 123, "svtype": "DEL"}, {"chrom": "scaffold_8", "chrom2": null, "end": 131998686, "nsamples": 8, "samples": "10;11;12;13;14;3;7;9", "start": 131997678, "svlength": 1008, "svtype": "DEL"}, {"chrom": "scaffold_10", "chrom2": null, "end": 19231683, "nsamples": 7, "samples": "1;13;14;3;5;6;8", "start": 19231319, "svlength": 364, "svtype": "DEL"}, {"chrom": "scaffold_10", "chrom2": null, "end": 84664723, "nsamples": 3, "samples": "10;2;4", "start": 84664632, "svlength": 91, "svtype": "DEL"}, {"chrom": "scaffold_10", "chrom2": null, "end": 87703734, "nsamples": 7, "samples": "10;11;12;13;3;7;9", "start": 87703317, "svlength": 417, "svtype": "DUP"}, {"chrom": "scaffold_10", "chrom2": null, "end": 90717583, "nsamples": 11, "samples": "10;11;12;13;2;3;4;5;6;7;8", "start": 90717528, "svlength": 55, "svtype": "DEL"}, {"chrom": "scaffold_10", "chrom2": null, "end": 109221102, "nsamples": 9, "samples": "10;14;2;3;4;5;6;8;9", "start": 109220575, "svlength": 527, "svtype": "DUP"}, {"chrom": "scaffold_11", "chrom2": null, "end": 3012867, "nsamples": 12, "samples": "1;10;11;12;13;14;2;3;4;5;7;9", "start": 3012807, "svlength": 60, "svtype": "DEL"}, {"chrom": "scaffold_11", "chrom2": null, "end": 12424334, "nsamples": 8, "samples": "1;10;11;12;3;7;8;9", "start": 12422789, "svlength": 1545, "svtype": "DEL"}, {"chrom": "scaffold_11", "chrom2": null, "end": 24734861, "nsamples": 2, "samples": "2;5", "start": 24734631, "svlength": 230, "svtype": "DEL"}, {"chrom": "scaffold_11", "chrom2": null, "end": 43990357, "nsamples": 3, "samples": "1;12;8", "start": 43990282, "svlength": 75, "svtype": "DEL"}, {"chrom": "scaffold_11", "chrom2": null, "end": 55112554, "nsamples": 10, "samples": "10;12;13;14;2;4;5;6;7;8", "start": 55107950, "svlength": 4604, "svtype": "DEL"}, {"chrom": "scaffold_11", "chrom2": null, "end": 72428774, "nsamples": 6, "samples": "11;13;14;3;7;9", "start": 72428677, "svlength": 97, "svtype": "DEL"}, {"chrom": "scaffold_12", "chrom2": null, "end": 4639506, "nsamples": 5, "samples": "1;13;14;6;8", "start": 4639414, "svlength": 92, "svtype": "DEL"}, {"chrom": "scaffold_12", "chrom2": null, "end": 11141041, "nsamples": 12, "samples": "1;11;12;13;14;2;3;4;5;6;7;8", "start": 11140985, "svlength": 56, "svtype": "DEL"}, {"chrom": "scaffold_12", "chrom2": null, "end": 33857134, "nsamples": 2, "samples": "4;7", "start": 33853716, "svlength": 3418, "svtype": "DEL"}, {"chrom": "scaffold_12", "chrom2": null, "end": 49840990, "nsamples": 3, "samples": "14;2;8", "start": 49840421, "svlength": 569, "svtype": "DEL"}, {"chrom": "scaffold_13", "chrom2": null, "end": 41871037, "nsamples": 8, "samples": "10;11;12;13;14;3;7;9", "start": 41868903, "svlength": 2134, "svtype": "DEL"}, {"chrom": "scaffold_14", "chrom2": null, "end": 9569987, "nsamples": 6, "samples": "12;13;14;2;5;8", "start": 9568524, "svlength": 1463, "svtype": "DEL"}, {"chrom": "scaffold_15", "chrom2": null, "end": 2381406, "nsamples": 10, "samples": "10;11;12;13;14;2;3;4;7;9", "start": 2377274, "svlength": 4132, "svtype": "DEL"}, {"chrom": "scaffold_15", "chrom2": null, "end": 18519942, "nsamples": 9, "samples": "1;10;11;12;13;14;3;7;9", "start": 18519883, "svlength": 59, "svtype": "DEL"}, {"chrom": "scaffold_15", "chrom2": null, "end": 20257358, "nsamples": 6, "samples": "1;13;14;5;6;8", "start": 20254004, "svlength": 3354, "svtype": "DEL"}]
+    const plot_type = "pdf"
+    const annotation = false
+    const denovo = false
+
+    dc.config.defaultColors(d3.schemeSet1)
+
+    // plot constraints
+    const plotw = 585
+    const ploth = 150
+
+    // table filters
+    var searchInput = dc.textFilterWidget("#sample-search")
+    var nsamplesChart = dc.barChart("#nsamples-chart")
+    var sizeChart = dc.barChart("#size-chart")
+    var typeChart = dc.barChart("#type-chart")
+    var chromChart = dc.barChart("#chrom-chart")
+    var overlapsChart
+    // shows filter impact in modal header
+    var variantCount = dc.dataCount("#variant-count")
+
+    // used to access filtered table data
+    var chromDimension
+    // datatables obj
+    var variant_table
+    // crossfilter obj
+    var ndx
+
+    $('#filter-modal').on('hidden.bs.modal', function () {
+        update_table()
+    })
+
+    const table_click = (selection, table) => {
+        table.$('tr.selected').removeClass('selected')
+        $(selection).addClass('selected')
+        let current = $('tr.selected')
+        let next = current.next()
+        let prev = current.prev()
+
+        let row = table.rows('.selected').data()[0]
+        let img = new Image()
+        img.src = `${row.svtype}_${row.chrom}_${row.start}_${row.end}.${plot_type}`
+        if ( row.chrom2) {
+            img.src = `${row.svtype}_${row.chrom}_${row.start}_${row.chrom2}_${row.end}.${plot_type}`
+        }
+        img.onerror = function(){
+           alert(`${img.src} not found`);
+        }
+        let viewer = new Viewer(img, {
+            hidden: function () {
+                viewer.destroy()
+            },
+            title: function () {
+                return `${row.svtype} on chromosome ${row.chrom} at ${row.start}-${row.end}`
+            },
+            toolbar: {
+                zoomIn: 4,
+                zoomOut: 4,
+                oneToOne: 4,
+                reset: 4,
+                prev: {
+                    show: prev.length > 0 ? true : false,
+                    size: "large",
+                    click: function () {
+                        viewer.destroy()
+                        table_click(prev, table)
+                    }
+                },
+                play: { show: false },
+                next: {
+                    show: next.length > 0 ? true : false,
+                    size: "large",
+                    click: function () {
+                        viewer.destroy()
+                        table_click(next, table)
+                    }
+                },
+                rotateLeft: { show: false },
+                rotateRight: { show: false },
+                flipHorizontal: { show: false },
+                flipVertical: { show: false },
+            },
+            transition: false,
+            navbar: false,
+        })
+        viewer.show()
+    }
+
+    function build_table(data) {
+        // hide the placeholder and show the datatable
+        d3.select('#variant-table-placeholder').property("hidden", true)
+        d3.select('#variant-table-div').property("hidden", false)
+
+        let cols = [
+            { data: 'chrom', title: 'Chrom' },
+            { data: 'start', title: 'Start' },
+            { data: 'end', title: 'End' },
+            { data: 'svlength', title: 'Size' },
+            { data: 'svtype', title: 'SV Type' },
+            { data: 'nsamples', title: '# of Samples' },
+            { data: 'samples', title: 'Samples' },
+        ]
+        if (annotation) {
+            d3.select('#overlaps-chart').property("hidden", false)
+            cols.push({ data: 'overlaps', title: 'Overlaps' })
+        }
+        if (denovo) {
+            cols.push({ data: 'dn', title: 'De novo' })
+        }
+
+        variant_table = $("#variant-table").DataTable({
+            data: data,
+            columns: cols,
+            deferRender: true,
+            scrollY: '80vh',
+            scrollCollapse: true,
+            scroller: true,
+            info: true,
+            buttons: [
+                'copyHtml5', 'csvHtml5'
+            ],
+            infoCallback: (oSettings, iStart, iEnd, iMax, iTotal, sPre) => {
+                return `
+            <span class="datatable-info">
+                <span class="pr-2">Showing <b>${iStart}</b> - <b>${iEnd}</b> of <b>${iTotal}</b> records</span>
+                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#filter-modal" title="Show filters">
+                    <span class="fas fa-filter"></span>
+                </button>
+                <span class="dropup">
+                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" id="download-menu" title="Save table" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="fas fa-save"></span>
+                    </button>
+                    <span class="dropdown-menu" aria-labelledby="download-menu">
+                        <h6 class="dropdown-header">Save ${iTotal} rows as:</h6>
+                        <button class="dropdown-item" type="button" id="csv-button-download" onclick="csv_button_click()">
+                            CSV
+                        </button>
+                        <button class="dropdown-item" type="button" id="copy-button-download" onclick="copy_button_click()">
+                            Copy
+                        </button>
+                    </span>
+                </span>
+            </span>
+            `
+            },
+            columnDefs: [
+                {
+                    targets: (annotation ? [0, 1, 2, 3, 4, 5, 7] : [0, 1, 2, 3, 4, 5]),
+                    width: '15%'
+                },
+                // https://datatables.net/blog/2016-02-26
+                {
+                    targets: 6,
+                    render: function (data, type, row) {
+                        if (type === 'display' && data != null) {
+                            data = data.replace(/<(?:.|\n)*?>/gm, '');
+                            if (data.length > 40) {
+                                return '<span class="show-ellipsis">' + data.substr(0, 40) + '</span><span class="no-show">' + data.substr(40) + '</span>';
+                            } else {
+                                return data;
+                            }
+                        } else {
+                            return data;
+                        }
+                    }
+                }
+            ],
+            // search is applied using crossfilter
+            searching: false,
+            lengthChange: false,
+            order: [[0, 'asc'], [1, 'asc']],
+        })
+
+        // register table clicks on sample_column
+        variant_table.on('click', 'tr', function () {
+            table_click(this, variant_table)
+        })
+    }
+
+    function csv_button_click() {
+        variant_table.button('.buttons-csv').trigger()
+    }
+
+    function copy_button_click() {
+        variant_table.button('.buttons-copy').trigger()
+    }
+
+    function update_table() {
+        variant_table.clear()
+        variant_table.rows.add(chromDimension.top(Infinity))
+        variant_table.draw()
+    }
+
+    function remove_empty_bins(source_group) {
+        return {
+            all: function () {
+                return source_group.all().filter(function (d) {
+                    return d.value != 0
+                })
+            }
+        }
+    }
+
+    // https://jsfiddle.net/gordonwoodhull/g34Ldwaz/8/
+    // https://github.com/dc-js/dc.js/issues/348
+    function index_group(group) {
+        return {
+            all: function () {
+                return group.all().map(function (kv, i) {
+                    return { key: i, value: kv.value }
+                })
+            }
+        }
+    }
+
+    $(document).ready(function () {
+
+        ndx = crossfilter(data)
+        var all = ndx.groupAll()
+
+        chromDimension = ndx.dimension((d) => { return d.chrom })
+        build_table(chromDimension.top(Infinity))
+        var chromGroup = chromDimension.group().reduceCount()
+        var nonEmptyChromGroup = remove_empty_bins(chromGroup)
+
+        var searchDimension = ndx.dimension(function (d) {
+            return d.samples
+        })
+        searchInput
+            .dimension(searchDimension)
+            .on('renderlet', function () {
+                d3.selectAll(".dc-text-filter-input")
+                    .classed("form-control", true)
+                d3.selectAll("#sample-search.dc-chart")
+                    .classed("col-12", true)
+            })
+
+        var sizeDimension = ndx.dimension(function (d) {
+            var round
+            if (d.svlength < 100) {
+                round = 100
+            } else if (d.svlength < 1000) {
+                round = 100
+            } else if (d.svlength < 10000) {
+                round = 1000
+            } else if (d.svlength < 100000) {
+                round = 10000
+            } else if (d.svlength < 1000000) {
+                round = 100000
+            } else if (d.svlength < 10000000) {
+                round = 1000000
+            } else {
+                round = 10000000
+            }
+            return Math.round(d.svlength / round) * round
+        })
+        var sizeGroup = sizeDimension.group().reduceCount()
+        var nonEmptySizeGroup = remove_empty_bins(sizeGroup)
+        // for brushing, need to track keys at numeric indexes
+        var sizeKeys = nonEmptySizeGroup.all().map(dc.pluck('key')).slice()
+
+        var typeDimension = ndx.dimension((d) => { return d.svtype })
+        var typeGroup = typeDimension.group().reduceCount()
+        var nonEmptyTypeGroup = remove_empty_bins(typeGroup)
+
+        var nsamplesDimension = ndx.dimension((d) => { return d.nsamples })
+        var nsamplesDimension = ndx.dimension(function (d) {
+            var round
+            if (d.nsamples < 10) {
+                round = 1
+            } else if (d.nsamples < 100) {
+                round = 10
+            } else if (d.nsamples < 1000) {
+                round = 100
+            } else if (d.nsamples < 10000) {
+                round = 1000
+            } else {
+                round = 10000
+            }
+            return Math.round(d.nsamples / round) * round
+        })
+        var nsamplesGroup = nsamplesDimension.group().reduceCount()
+        var nonEmptyNsamplesGroup = remove_empty_bins(nsamplesGroup)
+        var nsamplesKeys = nonEmptyNsamplesGroup.all().map(dc.pluck('key')).slice()
+
+        // number of samples
+        nsamplesChart
+            .width(plotw).height(ploth).gap(1)
+            .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+            .x(d3.scaleLinear().domain([0, nsamplesKeys.length]))
+            .round(Math.floor)
+            .brushOn(true)
+            .elasticX(true)
+            .dimension(nsamplesDimension)
+            .group(index_group(nonEmptyNsamplesGroup))
+            .elasticY(true)
+            .yAxisLabel('Count')
+            .filterPrinter(function (filters) {
+                var filter = filters[0]
+                return nsamplesKeys[filter[0]] + ' - ' + nsamplesKeys[filter[1]]
+            })
+        // limit the number of labels along x-axis
+        nsamplesChart.xAxis().ticks(20)
+        nsamplesChart.yAxis().ticks(5)
+        // update labels from keys
+        nsamplesChart.xAxis().tickFormat(function (v) {
+            return nsamplesKeys[v]
+        })
+        nsamplesChart.filterHandler(function (dimension, filters) {
+            if (filters.length === 0) {
+                // the empty case (no filtering)
+                dimension.filter(null)
+            } else {
+                dimension.filterRange([nsamplesKeys[filters[0][0]], nsamplesKeys[filters[0][1]]])
+            }
+            return filters
+        })
+
+        // SV length
+        sizeChart
+            .width(plotw).height(ploth).gap(1)
+            .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+            .x(d3.scaleLinear().domain([0, sizeKeys.length]))
+            .round(Math.floor)
+            .brushOn(true)
+            .elasticX(true)
+            .dimension(sizeDimension)
+            .group(index_group(nonEmptySizeGroup))
+            .elasticY(true)
+            .yAxisLabel('Count')
+            .filterPrinter(function (filters) {
+                var filter = filters[0]
+                return sizeKeys[filter[0]] + ' - ' + sizeKeys[filter[1]]
+            })
+            // adds left padding to plots inside filtering panel
+            .on('renderlet', function () {
+                d3.selectAll("svg")
+                    .classed("pl-3", true)
+            })
+        // limit the number of labels along x-axis
+        sizeChart.xAxis().ticks(10)
+        sizeChart.yAxis().ticks(5)
+        // update labels from keys
+        sizeChart.xAxis().tickFormat(function (v) {
+            return sizeKeys[v]
+        })
+        // update the status format for this chart
+        sizeChart.filterHandler(function (dimension, filters) {
+            if (filters.length === 0) {
+                // the empty case (no filtering)
+                dimension.filter(null)
+            } else {
+                dimension.filterRange([sizeKeys[filters[0][0]], sizeKeys[filters[0][1]]])
+            }
+            return filters
+        })
+
+        // sv type
+        typeChart
+            .width(plotw).height(ploth).gap(1)
+            .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+            .x(d3.scaleBand())
+            .xUnits(dc.units.ordinal)
+            .elasticX(true)
+            .elasticY(true)
+            .dimension(typeDimension)
+            .group(nonEmptyTypeGroup)
+            .yAxisLabel('Count')
+        typeChart.yAxis().ticks(5)
+
+        // chromosome
+        chromChart
+            .width(plotw).height(ploth).gap(1)
+            .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+            .x(d3.scaleBand())
+            .xUnits(dc.units.ordinal)
+            .yAxisLabel('Count')
+            .elasticX(true)
+            .elasticY(true)
+            .dimension(chromDimension)
+            .group(nonEmptyChromGroup)
+            .ordering((d) => {
+                v = parseInt(d.key)
+                if (v) {
+                    return v
+                } else {
+                    return d.key
+                }
+            })
+        chromChart.yAxis().ticks(5)
+
+        // overlaps
+        if (annotation) {
+            var overlapsDimension = ndx.dimension((d) => { return d.overlaps })
+            var overlapsGroup = overlapsDimension.group().reduceCount()
+            var nonEmptyOverlapsGroup = remove_empty_bins(overlapsGroup)
+            overlapsChart = dc.barChart("#overlaps-chart")
+            overlapsChart
+                .width(plotw).height(ploth).gap(1)
+                .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+                .x(d3.scaleBand())
+                .xUnits(dc.units.ordinal)
+                .elasticX(true)
+                .elasticY(true)
+                .dimension(overlapsDimension)
+                .group(nonEmptyOverlapsGroup)
+                .yAxisLabel('Count')
+            overlapsChart.yAxis().ticks(5)
+        }
+
+        variantCount
+            .crossfilter(ndx)
+            .groupAll(all)
+            // (_optional_) `.html` sets different html when some records or all records are selected.
+            // `.html` replaces everything in the anchor with the html given using the following function.
+            // `%filter-count` and `%total-count` are replaced with the values obtained.
+            .html({
+                some: '<strong>%filter-count</strong> selected out of <strong>%total-count</strong> records' +
+                    ' | <a href=\'javascript:dc.filterAll(); dc.renderAll();\'>Reset All</a>',
+                all: '<strong>%total-count</strong> records'
+            });
+
+        dc.renderAll()
+    })
+
+</script>
+
+</html>
