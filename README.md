@@ -1,6 +1,6 @@
 # The landscape of structural variation in aye-ayes (<i>Daubentonia madagascariensis</i>)
 
-Accompanying Supplementary Material for Cyril J. Versoza, Jeffrey D. Jensen, Susanne P. Pfeifer. 2025. The landscape of structural variation in aye-ayes (<i>Daubentonia madagascariensis</i>). <i>Genome Biol. Evol</i>.
+Supplementary Material accompanying C.J. Versoza, J.D. Jensen, S.P. Pfeifer. 2025. The landscape of structural variation in aye-ayes (<i>Daubentonia madagascariensis</i>). <i>Genome Biol. Evol</i>.
 
 
 * Supplementary Files (SupTab 6): Sample genotypes at the structural variants with major effects. 
